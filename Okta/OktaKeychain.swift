@@ -48,13 +48,13 @@ public class OktaKeychain: NSObject {
                kSecAttrAccount as String: key,
             kSecAttrAccessible as String: getAccessibility()
         ] as CFDictionary
-        
+
         var ref: AnyObject? = nil
-        
+
         let sanityCheck = SecItemCopyMatching(q, &ref)
 
         if sanityCheck != noErr { return nil }
-        
+
         if let parsedData = ref as? Data {
             return String(data: parsedData, encoding: .utf8)
         } else {

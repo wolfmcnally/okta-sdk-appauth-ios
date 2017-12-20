@@ -30,6 +30,28 @@ open class OktaTokenManager: NSObject {
         self.refreshToken = authState?.lastTokenResponse?.refreshToken
 
         OktaAuth.tokens = self
+
+        // Encode and store the current auth state
+        let authStateData = NSKeyedArchiver.archivedData(withRootObject: authState!)
+        self.setData(value: authStateData, forKey: "appAuthState")
+    }
+
+    public func setData(value: Data, forKey: String) {
+        self.setData(value: value, forKey: forKey, needsBackgroundAccess: false)
+    }
+
+    public func setData(value: Data, forKey: String, needsBackgroundAccess: Bool) {
+        var accessibility = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        if needsBackgroundAccess {
+            // If the device needs background keychain access, grant permission
+            accessibility = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        }
+        do {
+            try Vinculum.set(key: forKey, value: value, accessibility: accessibility)
+        } catch let error {
+            // Log the error until this method is updated to throw
+            print(error.localizedDescription)
+        }
     }
 
     public func set(value: String, forKey: String) {

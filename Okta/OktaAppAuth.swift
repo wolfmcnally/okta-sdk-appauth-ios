@@ -34,6 +34,11 @@ public func login() -> Login {
     return Login()
 }
 
+public func isAuthenticated() -> Bool {
+    // Returns if there is an active user session
+    return OktaTokenManager.isAuthenticated()
+}
+
 public func introspect() -> Introspect {
     // Check the validity of the tokens
     return Introspect()

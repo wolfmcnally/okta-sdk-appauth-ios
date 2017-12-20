@@ -21,12 +21,19 @@ public class OktaKeychain: NSObject {
     }
 
     internal class func set(key: String, object: String, access: Bool) {
-        let objectData = object.data(using: .utf8)
+        guard let data = object.data(using: .utf8) else {
+            print("Error storing to Keychain.")
+            return
+        }
 
+        set(key: key, objectData: data, access: access)
+    }
+    
+    internal class func set(key: String, objectData: Data, access: Bool) {
         let q = [
-                     kSecClass as String: kSecClassGenericPassword as String,
-                 kSecValueData as String: objectData!,
-               kSecAttrAccount as String: key,
+            kSecClass as String: kSecClassGenericPassword as String,
+            kSecValueData as String: objectData,
+            kSecAttrAccount as String: key,
             kSecAttrAccessible as String: getAccessibility()
         ] as CFDictionary
 
@@ -41,24 +48,30 @@ public class OktaKeychain: NSObject {
     }
 
     internal class func get(key: String) -> String? {
-        let q = [
-                     kSecClass as String: kSecClassGenericPassword,
-                kSecReturnData as String: kCFBooleanTrue,
-                kSecMatchLimit as String: kSecMatchLimitOne,
-               kSecAttrAccount as String: key,
-            kSecAttrAccessible as String: getAccessibility()
-        ] as CFDictionary
-
-        var ref: AnyObject? = nil
-
-        let sanityCheck = SecItemCopyMatching(q, &ref)
-
-        if sanityCheck != noErr { return nil }
-
-        if let parsedData = ref as? Data {
+        if let parsedData = self.getData(key: key) {
             return String(data: parsedData, encoding: .utf8)
         } else {
             print("Could not parse data as String")
+        }
+        return nil
+    }
+    
+    internal class func getData(key: String) -> Data? {
+        let q = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecReturnData as String: kCFBooleanTrue,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecAttrAccount as String: key,
+            kSecAttrAccessible as String: getAccessibility()
+            ] as CFDictionary
+        
+        var ref: AnyObject? = nil
+        
+        let sanityCheck = SecItemCopyMatching(q, &ref)
+        
+        if sanityCheck != noErr { return nil }
+        if let parsedData = ref as? Data {
+            return parsedData
         }
         return nil
     }

@@ -29,6 +29,18 @@ open class OktaTokenManager: NSObject {
         self.refreshToken = authState?.lastTokenResponse?.refreshToken
 
         OktaAuth.tokens = self
+
+        // Encode and store the current auth state
+        let authStateData = NSKeyedArchiver.archivedData(withRootObject: authState!)
+        self.setData(value: authStateData, forKey: "appAuthState")
+    }
+
+    public func setData(value: Data, forKey: String) {
+        self.setData(value: value, forKey: forKey, needsBackgroundAccess: false)
+    }
+
+    public func setData(value: Data, forKey: String, needsBackgroundAccess: Bool) {
+        OktaKeychain.set(key: forKey, objectData: value, access: needsBackgroundAccess)
     }
 
     public func set(value: String, forKey: String) {
@@ -47,5 +59,21 @@ open class OktaTokenManager: NSObject {
     public func clear() {
         OktaKeychain.removeAll()
         OktaAuth.tokens = nil
+    }
+
+    public class func isAuthenticated() -> Bool {
+        let accessToken = OktaKeychain.get(key: "accessToken")
+        let idToken = OktaKeychain.get(key: "idToken")
+
+        if accessToken == nil && idToken == nil {
+            return false
+        }
+
+        // Restore state
+        guard let encodedAuthState = OktaKeychain.getData(key: "appAuthState") else {
+            return false
+        }
+        let authState = encodedAuthState.
+        self.init(authState: authState)
     }
 }
